@@ -2,8 +2,10 @@ from sqlalchemy import create_engine
 import os
 import pandas as pd
 from config import HOURS_BACK_SEARCH
+PORT = 5432
+TABLE_NAME = "production"
 
-engine = create_engine(f"postgresql://naveed:{os.getenv('SWAPPED_DB_PASS')}@production-db-replica.cjqug0mcihk5.eu-central-1.rds.amazonaws.com:5432/production")
+engine = create_engine(f"postgresql://{os.getenv("SWAPPED_DB_USER")}:{os.getenv('SWAPPED_DB_PASS')}@{os.getenv("SWAPPED_DB_HOST")}:{PORT}/{TABLE_NAME}")
 
 cols = [
     'order_id',
