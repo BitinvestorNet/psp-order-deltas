@@ -1,4 +1,3 @@
-import os
 import requests
 from abc import ABC
 from datetime import datetime, timedelta, timezone
@@ -13,7 +12,7 @@ import time
 import urllib.parse
 import json
 from typing import Dict, Any, List
-from config import PSP_CONFIGS, PSP_FIELD_MAPPINGS, HOURS_BACK_SEARCH
+from config import PSP_CONFIGS, PSP_FIELD_MAPPINGS, HOURS_BACK_SEARCH, NO_DECIMAL_CURRENCIES
 
 class PSPBase(ABC):
     """Base class for PSP integrations."""
@@ -105,7 +104,7 @@ class StripePSP(PSPBase):
         import stripe
         self.stripe = stripe
         self.stripe.api_key = self.api_key
-    
+
     def fetch_payments(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
         start_ts = int(datetime.fromisoformat(start_date).timestamp())
         end_ts = int(datetime.fromisoformat(end_date).timestamp())
@@ -115,13 +114,15 @@ class StripePSP(PSPBase):
             created={'gte': start_ts, 'lte': end_ts},
             limit=1000
         ).auto_paging_iter():
+            desc = (pi.description or '').removeprefix("Order #")
+            amt = pi.amount / 100 if pi.currency.lower() not in NO_DECIMAL_CURRENCIES else pi.amount
             payments.append({
                 'id': pi.id,
                 'created': datetime.fromtimestamp(pi.created).isoformat(),
-                'amount': pi.amount / 100 if pi.currency.lower() != 'jpy' else pi.amount,
+                'amount': amt,
                 'currency': pi.currency,
                 'status': pi.status,
-                'description': pi.description.removeprefix("Order #")
+                'description': desc
             })
         return payments
 
@@ -381,7 +382,6 @@ class RevolutPSP(PSPBase):
         }
         
         response = requests.get(url, headers=headers, params=params)
-        print(response.request.url)
         response.raise_for_status()
         return response.json()
     
@@ -393,14 +393,18 @@ class RevolutPSP(PSPBase):
         
         while True:
             data = self._fetch_orders(start_date, end_date, page_size=page_size, created_before = created_before)
-
             created_before = data[-1]["created_at"]
-            print(len(data))
-            print(created_before)
+            data =[
+                {**p, 
+                 "order_currency": p["order_amount"]["currency"],
+                 "order_amount": p["order_amount"]["value"] / 100 if p["order_amount"]["currency"].lower() not in NO_DECIMAL_CURRENCIES else p["order_amount"]["value"], 
+                 } 
+                 for p in data
+                ]
             all_payments.extend(data)
             if len(data) < page_size:
                 break
-        
+
         return all_payments
     
 class JanuarPSP(PSPBase):
@@ -544,7 +548,7 @@ class PaymentMonitor:
         
         df = pd.DataFrame(all_payments)
         if not df.empty:
-            df['created_date'] = pd.to_datetime(df['created_date'], utc=True)
+            df['created_date'] = pd.to_datetime(df['created_date'], utc=True, format='ISO8601')
             df["payment_reference"] = df["payment_reference"].str.strip()
             df["amount"] = df["amount"].astype(float)
             df = df.sort_values('created_date')

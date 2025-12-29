@@ -11,7 +11,7 @@ PSP_CONFIGS = {
     'nicheclear': {'api_key': os.getenv('NICHECLEAR_API_KEY')},
     'pensopay': {'api_key': os.getenv('PENSOPAY_API_KEY')},
     'paypal': {'client_id': os.getenv('PAYPAL_CLIENT_ID'), 'client_secret': os.getenv('PAYPAL_CLIENT_SECRET')},
-    #'revolut': {'api_key': os.getenv('REVOLUT_API_KEY')},
+    'revolut': {'api_key': os.getenv('REVOLUT_API_KEY')},
     'januar': {"api_key": os.getenv("JANUAR_API_KEY"), 'api_secret': os.getenv("JANUAR_API_SECRET"), "account_id": os.getenv("JANUAR_ACCOUNT_ID")}
 }
 
@@ -49,8 +49,8 @@ PSP_FIELD_MAPPINGS = {
     'skrill': FieldMapping(
         order_id='Reference',
         created_date='Time (UTC)',
-        amount='Amount Sent',
-        currency='Currency sent',
+        amount='[+] ',
+        currency='Currency',
         status='Status',
         transaction_id='ID of the corresponding Skrill transaction',
         payment_reference=None
@@ -84,9 +84,9 @@ PSP_FIELD_MAPPINGS = {
     ),
     'revolut': FieldMapping(
         order_id='merchant_order_ext_ref',
-        created_date='started_date',
-        amount='amount',
-        currency='currency',
+        created_date='created_at',
+        amount='order_amount',
+        currency='order_currency',
         status='state',
         transaction_id='id',
         payment_reference=None
@@ -101,3 +101,5 @@ PSP_FIELD_MAPPINGS = {
         transaction_id="id",
     )
 }
+
+NO_DECIMAL_CURRENCIES = ["jpy", "vnd", "clp"]
