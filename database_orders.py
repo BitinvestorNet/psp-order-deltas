@@ -5,7 +5,7 @@ from config import HOURS_BACK_SEARCH
 PORT = 5432
 TABLE_NAME = "production"
 
-engine = create_engine(f"postgresql://{os.getenv("SWAPPED_DB_USER")}:{os.getenv('SWAPPED_DB_PASS')}@{os.getenv("SWAPPED_DB_HOST")}:{PORT}/{TABLE_NAME}")
+engine = create_engine(f"postgresql://{os.getenv('SWAPPED_DB_USER')}:{os.getenv('SWAPPED_DB_PASS')}@{os.getenv('SWAPPED_DB_HOST')}:{PORT}/{TABLE_NAME}")
 
 cols = [
     'order_id',
