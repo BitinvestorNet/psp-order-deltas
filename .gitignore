@@ -8,3 +8,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+#Redis
+dump.rdb
+dump-*.rdb
+*.rdb
