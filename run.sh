@@ -7,8 +7,11 @@ check_status() {
     fi
 }
 
+git checkout .
 git pull
 check_status "Update"
+
+chmod +x run.sh
 
 # use pip instead of apt, requires --break-system-packages 
 pip install --requirement /home/ubuntu/psp-order-deltas/requirements.txt --break-system-packages 
