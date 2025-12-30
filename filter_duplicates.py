@@ -1,22 +1,17 @@
+from datetime import datetime
 import json
-from pathlib import Path
-from datetime import datetime, timedelta
+import redis
+from redis_client import get_redis
 
-STATE_FILE = Path("psp_monitor_state.json")
-
-def load_seen_order_ids() -> set:
-    """Load previously seen mismatch order_ids."""
-    if STATE_FILE.exists():
-        with open(STATE_FILE) as f:
-            state = json.load(f)
-            return set(state.get("seen_order_ids", []))
-    return set()
+r = get_redis()
 
 def save_seen_order_ids(order_ids: set):
-    """Save seen order_ids with timestamp."""
-    state = {
-        "seen_order_ids": list(order_ids),
-        "last_updated": datetime.now().isoformat()
-    }
-    STATE_FILE.write_text(json.dumps(state, indent=2))
+    key = f"psp_state:{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    r.sadd(key, *order_ids)
+    r.expire(key, 7*86400) #86400 seconds per day => Expire after 1 week
 
+def load_seen_order_ids() -> set:
+    all_ids = set()
+    for key in r.scan_iter("psp_state:*"):
+        all_ids.update(r.smembers(key))
+    return all_ids

@@ -548,7 +548,7 @@ class PaymentMonitor:
         
         df = pd.DataFrame(all_payments)
         if not df.empty:
-            df['created_date'] = pd.to_datetime(df['created_date'], utc=True, format='ISO8601')
+            df['created_date'] = pd.to_datetime(df['created_date'], format='%Y-%m-%dT%H:%M:%S%z', utc=True)
             df["payment_reference"] = df["payment_reference"].str.strip()
             df["amount"] = df["amount"].astype(float)
             df = df.sort_values('created_date')

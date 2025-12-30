@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import os
 
 HOURS_BACK_SEARCH = 2
+NO_DECIMAL_CURRENCIES = ["jpy", "vnd", "clp"]
 
 # Config
 PSP_CONFIGS = {
@@ -102,4 +103,3 @@ PSP_FIELD_MAPPINGS = {
     )
 }
 
-NO_DECIMAL_CURRENCIES = ["jpy", "vnd", "clp"]

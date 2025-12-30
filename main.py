@@ -10,6 +10,7 @@ from config import HOURS_BACK_SEARCH
 from post_to_slack import alert_slack
 from filter_duplicates import load_seen_order_ids, save_seen_order_ids
 from monitor import monitor_deltas
+from redis_client import get_redis
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -20,10 +21,9 @@ LOCK_KEY = "psp-order-deltas:job-lock"
 _redis_client = None
 _lock_held = False
 
-
 def acquire_lock():
     global _redis_client, _lock_held
-    _redis_client = redis.Redis(host='localhost', port=6379, db=0)
+    _redis_client = get_redis()
     if _redis_client.setnx(LOCK_KEY, "1"):
         _lock_held = True
         logger.info("Job lock acquired")
@@ -43,12 +43,10 @@ def release_lock():
             logger.error(f"Failed to release lock: {e}")
         _lock_held = False
 
-
 def signal_handler(signum, frame):
     logger.info(f"Received signal {signum}, cleaning up...")
     release_lock()
     exit(1)
-
 
 def main():
     if not acquire_lock():
@@ -71,7 +69,7 @@ def main():
                 alert_slack(new_mismatches)
 
                 # Update state with ALL seen (new + old)
-                all_seen = set(seen_order_ids) | set(new_mismatches['order_id'].astype(str))
+                all_seen = set(new_mismatches['order_id'].astype(str))
                 save_seen_order_ids(all_seen)
             else:
                 logger.info("No new mismatches (all previously seen)")
